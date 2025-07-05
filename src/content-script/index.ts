@@ -176,28 +176,51 @@ class ContentScript {
     // Listen for GitHub's soft navigation
     let lastUrl = window.location.href;
     
-    const observer = new MutationObserver(() => {
+    const checkUrlChange = () => {
       if (window.location.href !== lastUrl) {
         lastUrl = window.location.href;
         this.handleNavigation();
       }
-    });
+    };
 
+    // Method 1: MutationObserver for DOM changes
+    const observer = new MutationObserver(checkUrlChange);
     observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
 
-    // Also listen for popstate events
+    // Method 2: History API events
     window.addEventListener('popstate', this.handleNavigation.bind(this));
+    
+    // Method 3: Override pushState and replaceState for SPA navigation
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      setTimeout(checkUrlChange, 100);
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      setTimeout(checkUrlChange, 100);
+    };
+
+    // Method 4: Periodic URL check as fallback
+    setInterval(checkUrlChange, 1000);
   }
 
   private async handleNavigation(): Promise<void> {
     try {
       const newRepository = extractRepositoryFromUrl(window.location.href);
       
+      // Always reset detected keys on any navigation within GitHub
+      console.log(`GitHub Issue Linker: Navigation detected from ${this.currentRepository} to ${newRepository}`);
+      this.linkProcessor.reset();
+      
       if (newRepository !== this.currentRepository) {
-        console.log(`GitHub Issue Linker: Navigation detected to ${newRepository}`);
+        console.log(`GitHub Issue Linker: Repository changed to ${newRepository}`);
         
         // Clear processing cache for old repository
         if (this.currentRepository) {
@@ -210,10 +233,12 @@ class ContentScript {
           // Get new mappings and reinitialize
           const mappings = await storage.getMappingForRepository(this.currentRepository);
           this.linkProcessor.setMappings(mappings);
-          
-          // Process new content after a short delay to allow page to load
-          setTimeout(() => this.processInitialContent(), 500);
         }
+      }
+      
+      // Always reprocess content on any navigation (including same-repo navigation)
+      if (this.currentRepository) {
+        setTimeout(() => this.processInitialContent(), 500);
       }
     } catch (error) {
       await this.logError('Failed to handle navigation', error);
