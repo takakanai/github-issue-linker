@@ -108,9 +108,20 @@ export function Popup() {
 
   return (
     <div className="w-80 p-2 space-y-2">
-      {/* Header */}
+      {/* Header with Enable/Disable Control */}
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">GitHub Issue Linker</h1>
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={preferences?.enabled || false}
+            onCheckedChange={toggleEnabled}
+          />
+          <div>
+            <p className="font-medium">Extension</p>
+            <p className="text-xs text-muted-foreground">
+              {preferences?.enabled ? 'Active' : 'Disabled'}
+            </p>
+          </div>
+        </div>
         <div className="flex gap-1">
           <Button variant="ghost" size="sm" onClick={reloadPage} title="Reload Page">
             <RefreshCw className="h-4 w-4" />
@@ -121,59 +132,28 @@ export function Popup() {
         </div>
       </div>
 
-      {/* Main Toggle */}
-      <Card>
-        <CardContent className="py-3 px-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Extension Enabled</p>
-              <p className="text-sm text-muted-foreground">
-                {preferences?.enabled ? 'Active' : 'Disabled'}
-              </p>
-            </div>
-            <Switch
-              checked={preferences?.enabled || false}
-              onCheckedChange={toggleEnabled}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Current Repository */}
       {currentRepository ? (
         <Card>
-          <CardHeader className="pb-1 px-4 pt-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Current Repository
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 px-4 pb-3">
-            <p className="font-mono text-sm">{currentRepository}</p>
-            {currentMappings.length > 0 && (
-              <div className="mt-2 space-y-1">
-                <p className="text-xs text-muted-foreground">Active Mappings:</p>
-                {currentMappings.map(mapping => (
-                  <div key={mapping.id} className="flex items-center justify-between py-1">
-                    <Badge variant="secondary" className="text-xs">
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Activity className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Repository</span>
+                </div>
+                <p className="font-mono text-sm truncate">{currentRepository}</p>
+              </div>
+              {currentMappings.length > 0 && (
+                <div className="ml-3 flex items-center gap-1">
+                  {currentMappings.map(mapping => (
+                    <Badge key={mapping.id} variant="secondary" className="text-xs">
                       {mapping.keyPrefix}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(mapping.backlogUrl, '_blank')}
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {currentMappings.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                No active mappings for this repository.
-              </p>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -187,16 +167,16 @@ export function Popup() {
       )}
 
       {/* Detected Issue Keys */}
-      {detectedKeys.length > 0 && (
-        <Card>
+      {detectedKeys.length > 0 ? (
+        <Card className="flex-1">
           <CardHeader className="pb-1 px-4 pt-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Link2 className="h-4 w-4" />
-              Detected Issue Keys
+              Detected Issue Keys ({detectedKeys.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0 px-4 pb-3">
-            <div className="space-y-1 max-h-32 overflow-y-auto">
+            <div className="space-y-1 max-h-64 overflow-y-auto">
               {detectedKeys.map((item, index) => {
                 const backlogUrl = generateBacklogUrl(item.key, item.mapping);
                 return (
@@ -223,30 +203,17 @@ export function Popup() {
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <Card className="flex-1">
+          <CardContent className="py-8 px-4">
+            <div className="text-center text-muted-foreground">
+              <Link2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No issue keys detected</p>
+              <p className="text-xs mt-1">Navigate to a page with issue keys to see them here</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
-
-      {/* Statistics */}
-      <Card>
-        <CardHeader className="pb-1 px-4 pt-3">
-          <CardTitle className="text-sm">Statistics</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 px-4 pb-3">
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total Mappings:</span>
-              <span className="font-medium">{mappings.length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Active Mappings:</span>
-              <span className="font-medium">{mappings.filter(m => m.enabled).length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Detected Keys:</span>
-              <span className="font-medium">{detectedKeys.length}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

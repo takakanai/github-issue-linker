@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { MappingDialog } from '@/components/MappingDialog';
-import { Edit, Trash2, ExternalLink } from 'lucide-react';
+import { Edit, Trash2, ExternalLink, BarChart3 } from 'lucide-react';
 import type { RepositoryMapping } from '@/types';
 
 export function Options() {
@@ -12,10 +12,42 @@ export function Options() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMapping, setEditingMapping] = useState<RepositoryMapping | null>(null);
+  const [currentRepository, setCurrentRepository] = useState<string | null>(null);
+  const [detectedKeys, setDetectedKeys] = useState<Array<{ key: string; mapping: RepositoryMapping }>>([]);
 
   useEffect(() => {
     loadMappings();
+    loadStatisticsData();
   }, []);
+
+  const loadStatisticsData = async () => {
+    try {
+      // Get current tab to determine repository (if running from a GitHub tab)
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs[0];
+      if (tab?.url) {
+        const repoMatch = tab.url.match(/github\.com\/([^\/]+\/[^\/]+)/);
+        if (repoMatch) {
+          setCurrentRepository(repoMatch[1]);
+          
+          // Try to get detected keys from content script
+          try {
+            const response = await chrome.tabs.sendMessage(tab.id!, {
+              type: 'GET_DETECTED_KEYS',
+            });
+            if (response.success) {
+              setDetectedKeys(response.data.keys || []);
+            }
+          } catch (error) {
+            // Content script not available
+            setDetectedKeys([]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading statistics data:', error);
+    }
+  };
 
   const loadMappings = async () => {
     try {
@@ -198,6 +230,53 @@ export function Options() {
             <div className="mt-4">
               <Button onClick={handleAddMapping}>Add New Mapping</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Statistics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{mappings.length}</div>
+                <div className="text-sm text-muted-foreground">Total Mappings</div>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{mappings.filter(m => m.enabled).length}</div>
+                <div className="text-sm text-muted-foreground">Active Mappings</div>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-primary">{detectedKeys.length}</div>
+                <div className="text-sm text-muted-foreground">Detected Keys</div>
+                {currentRepository && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    in {currentRepository}
+                  </div>
+                )}
+              </div>
+            </div>
+            {detectedKeys.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-2">Recently Detected Keys:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {detectedKeys.slice(0, 10).map((item, index) => (
+                    <Badge key={`${item.key}-${index}`} variant="outline" className="text-xs">
+                      {item.key}
+                    </Badge>
+                  ))}
+                  {detectedKeys.length > 10 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{detectedKeys.length - 10} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
