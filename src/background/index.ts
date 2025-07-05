@@ -15,6 +15,12 @@ class BackgroundService {
     // Handle storage changes
     chrome.storage.onChanged.addListener(this.handleStorageChanged.bind(this));
     
+    // Handle tab updates to clear badge when leaving GitHub
+    chrome.tabs.onUpdated.addListener(this.handleTabUpdated.bind(this));
+    
+    // Handle tab removal to clean up badges
+    chrome.tabs.onRemoved.addListener(this.handleTabRemoved.bind(this));
+    
     console.log('GitHub Issue Linker: Background service initialized');
   }
 
@@ -136,6 +142,11 @@ class BackgroundService {
             sendResponse({ success: true });
             break;
             
+          case 'UPDATE_BADGE':
+            await this.updateBadge(message.data.count, _sender.tab?.id);
+            sendResponse({ success: true });
+            break;
+            
           default:
             sendResponse({ success: false, error: 'Unknown message type' });
         }
@@ -174,6 +185,53 @@ class BackgroundService {
       }
     } catch (error) {
       console.error('Error handling storage changes:', error);
+    }
+  }
+
+  private async updateBadge(count: number, tabId?: number): Promise<void> {
+    try {
+      // Set badge text
+      const badgeText = count > 0 ? count.toString() : '';
+      
+      if (tabId) {
+        // Update badge for specific tab
+        await chrome.action.setBadgeText({ text: badgeText, tabId });
+      } else {
+        // Update badge globally
+        await chrome.action.setBadgeText({ text: badgeText });
+      }
+      
+      // Set badge background color (dark gray/black for subtle appearance)
+      await chrome.action.setBadgeBackgroundColor({ 
+        color: count > 0 ? '#4a4a4a' : '#808080',
+        ...(tabId && { tabId })
+      });
+      
+      console.log(`GitHub Issue Linker: Badge updated to ${count} for tab ${tabId || 'global'}`);
+    } catch (error) {
+      console.error('Error updating badge:', error);
+    }
+  }
+
+  private async handleTabUpdated(
+    tabId: number, 
+    changeInfo: chrome.tabs.TabChangeInfo, 
+    tab: chrome.tabs.Tab
+  ): Promise<void> {
+    // Clear badge when navigating away from GitHub or on page load
+    if (changeInfo.status === 'loading' && tab.url) {
+      if (!tab.url.includes('github.com')) {
+        await this.updateBadge(0, tabId);
+      }
+    }
+  }
+
+  private async handleTabRemoved(tabId: number): Promise<void> {
+    // Clean up any tab-specific data when tab is closed
+    try {
+      await chrome.action.setBadgeText({ text: '', tabId });
+    } catch (error) {
+      // Tab already closed, ignore error
     }
   }
 

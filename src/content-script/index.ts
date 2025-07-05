@@ -115,6 +115,9 @@ class ContentScript {
         console.log(`GitHub Issue Linker: Detected ${detectedKeys.length} unique keys:`, detectedKeys);
       }
       
+      // Update extension badge with detected keys count
+      await this.updateBadge(detectedKeys.length);
+      
       // Record performance metrics
       await storage.addPerformanceMetric({
         repository: this.currentRepository!,
@@ -219,6 +222,9 @@ class ContentScript {
       console.log(`GitHub Issue Linker: Navigation detected from ${this.currentRepository} to ${newRepository}`);
       this.linkProcessor.reset();
       
+      // Clear badge during navigation
+      await this.updateBadge(0);
+      
       if (newRepository !== this.currentRepository) {
         console.log(`GitHub Issue Linker: Repository changed to ${newRepository}`);
         
@@ -254,6 +260,18 @@ class ContentScript {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func(...args), delay);
     };
+  }
+
+  private async updateBadge(count: number): Promise<void> {
+    try {
+      // Send message to background script to update badge
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_BADGE',
+        data: { count }
+      });
+    } catch (error) {
+      console.error('GitHub Issue Linker: Failed to update badge:', error);
+    }
   }
 
   private async logError(message: string, error: any): Promise<void> {
