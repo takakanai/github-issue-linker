@@ -67,7 +67,7 @@
         "js": [
           "src/content-script/index.ts"
         ],
-        "run_at": "document_end"
+        "run_at": "document_idle"
       }
     ],
     "background": {

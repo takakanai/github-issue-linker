@@ -3,13 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, ExternalLink, Activity } from 'lucide-react';
+import { Settings, ExternalLink, Activity, Link2 } from 'lucide-react';
 import type { UserPreferences, RepositoryMapping } from '@/types';
+import { sanitizeUrl } from '@/lib/utils';
 
 export function Popup() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [currentRepository, setCurrentRepository] = useState<string | null>(null);
   const [mappings, setMappings] = useState<RepositoryMapping[]>([]);
+  const [detectedKeys, setDetectedKeys] = useState<Array<{ key: string; mapping: RepositoryMapping }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +41,21 @@ export function Popup() {
       });
       if (mappingsResponse.success) {
         setMappings(mappingsResponse.data);
+      }
+
+      // Get detected keys from content script
+      if (repository) {
+        try {
+          const detectedResponse = await chrome.tabs.sendMessage(tab.id!, {
+            type: 'GET_DETECTED_KEYS',
+          });
+          if (detectedResponse.success) {
+            setDetectedKeys(detectedResponse.data.keys || []);
+          }
+        } catch (error) {
+          console.log('Content script not ready or no keys detected');
+          setDetectedKeys([]);
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -70,6 +87,10 @@ export function Popup() {
   const currentMappings = mappings.filter(m => 
     currentRepository && m.repository === currentRepository && m.enabled
   );
+
+  const generateBacklogUrl = (key: string, mapping: RepositoryMapping): string => {
+    return `${sanitizeUrl(mapping.backlogUrl)}/view/${encodeURIComponent(key)}`;
+  };
 
   if (loading) {
     return (
@@ -156,6 +177,45 @@ export function Popup() {
         </Card>
       )}
 
+      {/* Detected Issue Keys */}
+      {detectedKeys.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              Detected Issue Keys
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {detectedKeys.map((item, index) => {
+                const backlogUrl = generateBacklogUrl(item.key, item.mapping);
+                return (
+                  <div key={`${item.key}-${index}`} className="flex items-center justify-between p-2 rounded border">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {item.key}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {item.mapping.keyPrefix}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(backlogUrl, '_blank')}
+                      title={`Open ${item.key} in Backlog`}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistics */}
       <Card>
         <CardHeader className="pb-3">
@@ -172,8 +232,8 @@ export function Popup() {
               <span className="font-medium">{mappings.filter(m => m.enabled).length}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Current Repo:</span>
-              <span className="font-medium">{currentMappings.length}</span>
+              <span className="text-muted-foreground">Detected Keys:</span>
+              <span className="font-medium">{detectedKeys.length}</span>
             </div>
           </div>
         </CardContent>

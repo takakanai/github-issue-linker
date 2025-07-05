@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,13 +21,46 @@ interface MappingDialogProps {
 }
 
 export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDialogProps) {
-  const [repository, setRepository] = useState(mapping?.repository || '');
-  const [backlogUrl, setBacklogUrl] = useState(mapping?.backlogUrl || '');
-  const [keyPrefix, setKeyPrefix] = useState(mapping?.keyPrefix || '');
+  const [repository, setRepository] = useState('');
+  const [backlogUrl, setBacklogUrl] = useState('');
+  const [keyPrefix, setKeyPrefix] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
+  // Update form when mapping changes
+  useEffect(() => {
+    if (mapping) {
+      setRepository(mapping.repository);
+      setBacklogUrl(mapping.backlogUrl);
+      setKeyPrefix(mapping.keyPrefix);
+    } else {
+      setRepository('');
+      setBacklogUrl('');
+      setKeyPrefix('');
+    }
+    setErrors({});
+  }, [mapping, open]);
+
   const isEditing = !!mapping;
+
+  // Check if form is valid for button state
+  const isFormValid = () => {
+    return (
+      repository.trim() !== '' &&
+      backlogUrl.trim() !== '' &&
+      keyPrefix.trim() !== '' &&
+      isValidRepositoryName(repository.trim()) &&
+      isValidKeyPrefix(keyPrefix.trim()) &&
+      (() => {
+        try {
+          const url = new URL(backlogUrl.trim());
+          return url.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      })()
+    );
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -96,13 +129,18 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
   };
 
   const handleCancel = () => {
-    onOpenChange(false);
     setErrors({});
-    if (!isEditing) {
+    // Reset form if not editing, or revert to original values if editing
+    if (isEditing && mapping) {
+      setRepository(mapping.repository);
+      setBacklogUrl(mapping.backlogUrl);
+      setKeyPrefix(mapping.keyPrefix);
+    } else {
       setRepository('');
       setBacklogUrl('');
       setKeyPrefix('');
     }
+    onOpenChange(false);
   };
 
   return (
@@ -124,7 +162,13 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               id="repository"
               placeholder="owner/repo"
               value={repository}
-              onChange={(e) => setRepository(e.target.value)}
+              onChange={(e) => {
+                setRepository(e.target.value);
+                // Clear error when user starts typing
+                if (errors.repository) {
+                  setErrors(prev => ({ ...prev, repository: '' }));
+                }
+              }}
               className={errors.repository ? 'border-destructive' : ''}
             />
             {errors.repository && (
@@ -141,7 +185,13 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               id="backlogUrl"
               placeholder="https://your-project.backlog.com"
               value={backlogUrl}
-              onChange={(e) => setBacklogUrl(e.target.value)}
+              onChange={(e) => {
+                setBacklogUrl(e.target.value);
+                // Clear error when user starts typing
+                if (errors.backlogUrl) {
+                  setErrors(prev => ({ ...prev, backlogUrl: '' }));
+                }
+              }}
               className={errors.backlogUrl ? 'border-destructive' : ''}
             />
             {errors.backlogUrl && (
@@ -158,7 +208,13 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               id="keyPrefix"
               placeholder="WMS"
               value={keyPrefix}
-              onChange={(e) => setKeyPrefix(e.target.value.toUpperCase())}
+              onChange={(e) => {
+                setKeyPrefix(e.target.value.toUpperCase());
+                // Clear error when user starts typing
+                if (errors.keyPrefix) {
+                  setErrors(prev => ({ ...prev, keyPrefix: '' }));
+                }
+              }}
               className={errors.keyPrefix ? 'border-destructive' : ''}
             />
             {errors.keyPrefix && (
@@ -174,7 +230,10 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
           <Button variant="outline" onClick={handleCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading}>
+          <Button 
+            onClick={handleSave} 
+            disabled={loading || !isFormValid()}
+          >
             {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Mapping'}
           </Button>
         </DialogFooter>

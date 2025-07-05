@@ -1,12 +1,12 @@
 import type { RepositoryMapping, LinkProcessingOptions } from '@/types';
-import { createSecureLink, shouldExcludeElement, getTextNodes, requestIdleCallback } from '@/lib/utils';
+import { shouldExcludeElement, getTextNodes, requestIdleCallback } from '@/lib/utils';
 import { BacklogTracker } from '@/lib/issue-tracker';
 
 export class LinkProcessor {
   private mappings: RepositoryMapping[] = [];
   private tracker = new BacklogTracker();
   private processedCount = 0;
-  private successCount = 0;
+  private detectedKeys: Array<{ key: string; mapping: RepositoryMapping }> = [];
   private options: LinkProcessingOptions = {
     performanceMode: 'auto',
     maxProcessingTime: 500,
@@ -30,6 +30,20 @@ export class LinkProcessor {
 
   public setMappings(mappings: RepositoryMapping[]): void {
     this.mappings = mappings;
+    console.log('GitHub Issue Linker: Set mappings:', mappings);
+    
+    // Test pattern matching
+    if (mappings.length > 0) {
+      for (const mapping of mappings) {
+        const pattern = this.tracker.generatePattern(mapping.keyPrefix);
+        console.log(`GitHub Issue Linker: Pattern for ${mapping.keyPrefix}:`, pattern);
+        
+        // Test with sample text
+        const testText = `This is a test with ${mapping.keyPrefix}-123 and ${mapping.keyPrefix}-456`;
+        const matches = testText.match(pattern);
+        console.log(`GitHub Issue Linker: Test matches for "${testText}":`, matches);
+      }
+    }
   }
 
   public async processElement(element: Element): Promise<void> {
@@ -117,6 +131,10 @@ export class LinkProcessor {
 
   private async processTextNodes(element: Element): Promise<void> {
     const textNodes = getTextNodes(element);
+    console.log(`GitHub Issue Linker: Found ${textNodes.length} text nodes to process in element:`, element);
+    
+    // Also detect keys in existing links
+    this.detectKeysInExistingLinks(element);
     
     // Process in batches to avoid blocking the UI
     for (let i = 0; i < textNodes.length; i += this.options.batchSize) {
@@ -137,74 +155,113 @@ export class LinkProcessor {
       this.processedCount++;
       
       try {
-        const processed = this.processTextNode(textNode);
-        if (processed) {
-          this.successCount++;
-        }
+        this.detectKeysInTextNode(textNode);
       } catch (error) {
         console.error('Error processing text node:', error);
       }
     }
   }
 
-  private processTextNode(textNode: Text): boolean {
-    if (!textNode.textContent || !textNode.parentElement) {
-      return false;
-    }
-
-    let hasMatches = false;
-    let processedText = textNode.textContent;
-
-    // Process each mapping
-    for (const mapping of this.mappings) {
-      const pattern = this.tracker.generatePattern(mapping.keyPrefix);
-      const matches = processedText.match(pattern);
+  private detectKeysInExistingLinks(element: Element): void {
+    const links = element.querySelectorAll('a');
+    
+    for (const link of links) {
+      if (!link.textContent) continue;
       
-      if (matches) {
-        hasMatches = true;
+      const linkText = link.textContent;
+      
+      for (const mapping of this.mappings) {
+        const pattern = this.tracker.generatePattern(mapping.keyPrefix);
+        let match;
         
-        // Replace matches with links
-        for (const match of matches) {
-          try {
-            const link = createSecureLink(match, mapping.backlogUrl);
-            processedText = processedText.replace(match, link.outerHTML);
-          } catch (error) {
-            console.error(`Error creating link for ${match}:`, error);
+        // Reset regex lastIndex to ensure we find all matches
+        pattern.lastIndex = 0;
+        
+        while ((match = pattern.exec(linkText)) !== null) {
+          const key = match[0];
+          
+          // Check if we already detected this key
+          const alreadyDetected = this.detectedKeys.some(detected => 
+            detected.key === key && detected.mapping.keyPrefix === mapping.keyPrefix
+          );
+          
+          if (!alreadyDetected) {
+            this.detectedKeys.push({ key, mapping });
+            console.log(`GitHub Issue Linker: Detected issue key ${key} in existing link`);
+          }
+          
+          // Prevent infinite loop on zero-length matches
+          if (match.index === pattern.lastIndex) {
+            pattern.lastIndex++;
           }
         }
       }
     }
+  }
 
-    if (hasMatches) {
-      // Replace the text node with processed HTML
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = processedText;
-      
-      // Replace text node with new elements
-      const parent = textNode.parentElement;
-      const fragment = document.createDocumentFragment();
-      
-      while (tempDiv.firstChild) {
-        fragment.appendChild(tempDiv.firstChild);
-      }
-      
-      parent.replaceChild(fragment, textNode);
+  private detectKeysInTextNode(textNode: Text): void {
+    if (!textNode.textContent || !textNode.parentElement) {
+      return;
     }
 
-    return hasMatches;
+    // Skip if this text is already inside a link
+    let parent: HTMLElement | null = textNode.parentElement;
+    while (parent) {
+      if (parent.tagName === 'A') {
+        return; // Skip text that's already in a link
+      }
+      parent = parent.parentElement;
+    }
+
+    const originalText = textNode.textContent;
+    
+    for (const mapping of this.mappings) {
+      const pattern = this.tracker.generatePattern(mapping.keyPrefix);
+      let match;
+      
+      // Reset regex lastIndex to ensure we find all matches
+      pattern.lastIndex = 0;
+      
+      while ((match = pattern.exec(originalText)) !== null) {
+        const key = match[0];
+        
+        // Check if we already detected this key
+        const alreadyDetected = this.detectedKeys.some(detected => 
+          detected.key === key && detected.mapping.keyPrefix === mapping.keyPrefix
+        );
+        
+        if (!alreadyDetected) {
+          this.detectedKeys.push({ key, mapping });
+          console.log(`GitHub Issue Linker: Detected issue key ${key}`);
+        }
+        
+        // Prevent infinite loop on zero-length matches
+        if (match.index === pattern.lastIndex) {
+          pattern.lastIndex++;
+        }
+      }
+    }
   }
 
   public getProcessedCount(): number {
     return this.processedCount;
   }
 
-  public getSuccessRate(): number {
-    return this.processedCount > 0 ? this.successCount / this.processedCount : 0;
+  public getDetectedKeys(): Array<{ key: string; mapping: RepositoryMapping }> {
+    return this.detectedKeys;
+  }
+
+  public getUniqueDetectedKeys(): Array<{ key: string; mapping: RepositoryMapping }> {
+    const unique = new Map<string, { key: string; mapping: RepositoryMapping }>();
+    this.detectedKeys.forEach(item => {
+      unique.set(item.key, item);
+    });
+    return Array.from(unique.values());
   }
 
   public reset(): void {
     this.processedCount = 0;
-    this.successCount = 0;
+    this.detectedKeys = [];
   }
 
   public destroy(): void {

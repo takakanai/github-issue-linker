@@ -11,13 +11,46 @@ class ContentScript {
 
   constructor() {
     this.linkProcessor = new LinkProcessor();
+    this.setupMessageListener();
     this.init();
+  }
+
+  private setupMessageListener(): void {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+      if (message.type === 'GET_DETECTED_KEYS') {
+        this.handleGetDetectedKeys(sendResponse);
+        return true; // Indicates async response
+      }
+    });
+  }
+
+  private async handleGetDetectedKeys(sendResponse: (response: any) => void): Promise<void> {
+    try {
+      if (!this.currentRepository) {
+        sendResponse({ success: false, error: 'No repository detected' });
+        return;
+      }
+
+      const detectedKeys = this.linkProcessor.getUniqueDetectedKeys();
+      sendResponse({ 
+        success: true, 
+        data: {
+          repository: this.currentRepository,
+          keys: detectedKeys
+        }
+      });
+    } catch (error) {
+      sendResponse({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    }
   }
 
   private async init(): Promise<void> {
     try {
+      console.log('GitHub Issue Linker: Starting initialization...');
+      
       // Get current repository from URL
       this.currentRepository = extractRepositoryFromUrl(window.location.href);
+      console.log('GitHub Issue Linker: Current repository:', this.currentRepository);
       
       if (!this.currentRepository) {
         console.log('GitHub Issue Linker: Not a repository page');
@@ -25,7 +58,9 @@ class ContentScript {
       }
 
       // Check if extension is enabled
+      console.log('GitHub Issue Linker: Checking user preferences...');
       const preferences = await storage.getUserPreferences();
+      console.log('GitHub Issue Linker: User preferences:', preferences);
       this.isEnabled = preferences.enabled;
 
       if (!this.isEnabled) {
@@ -34,6 +69,7 @@ class ContentScript {
       }
 
       // Get repository mappings
+      console.log('GitHub Issue Linker: Getting repository mappings...');
       const mappings = await storage.getMappingForRepository(this.currentRepository);
       
       if (mappings.length === 0) {
@@ -41,7 +77,7 @@ class ContentScript {
         return;
       }
 
-      console.log(`GitHub Issue Linker: Found ${mappings.length} mappings for ${this.currentRepository}`);
+      console.log(`GitHub Issue Linker: Found ${mappings.length} mappings for ${this.currentRepository}`, mappings);
 
       // Initialize link processor with mappings
       this.linkProcessor.setMappings(mappings);
@@ -73,12 +109,18 @@ class ContentScript {
       
       console.log(`GitHub Issue Linker: Initial processing completed in ${processingTime}ms`);
       
+      // Save detected keys to storage
+      const detectedKeys = this.linkProcessor.getUniqueDetectedKeys();
+      if (detectedKeys.length > 0) {
+        console.log(`GitHub Issue Linker: Detected ${detectedKeys.length} unique keys:`, detectedKeys);
+      }
+      
       // Record performance metrics
       await storage.addPerformanceMetric({
         repository: this.currentRepository!,
         linkificationTime: processingTime,
         elementsProcessed: this.linkProcessor.getProcessedCount(),
-        successRate: this.linkProcessor.getSuccessRate(),
+        successRate: detectedKeys.length / Math.max(this.linkProcessor.getProcessedCount(), 1),
         timestamp: Date.now(),
       });
       
@@ -214,10 +256,21 @@ class ContentScript {
   }
 }
 
-// Initialize content script
-const contentScript = new ContentScript();
+// Initialize content script with error handling
+console.log('GitHub Issue Linker: Content script starting...');
 
-// Clean up on page unload
-window.addEventListener('beforeunload', () => {
-  contentScript.destroy();
-});
+try {
+  const contentScript = new ContentScript();
+  
+  // Make it globally accessible for debugging
+  (window as any).contentScript = contentScript;
+  
+  console.log('GitHub Issue Linker: Content script initialized successfully');
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    contentScript.destroy();
+  });
+} catch (error) {
+  console.error('GitHub Issue Linker: Failed to initialize content script:', error);
+}
