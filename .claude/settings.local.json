@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gemini:*)"
+      "Bash(gemini:*)",
+      "Bash(mkdir:*)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
