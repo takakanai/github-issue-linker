@@ -225,7 +225,27 @@ export function Popup() {
           </CardHeader>
           <CardContent className="pt-0 px-4 pb-3">
             <div className="space-y-1 max-h-64 overflow-y-auto">
-              {detectedKeys.map((item, index) => {
+              {detectedKeys
+                .sort((a, b) => {
+                  // Extract prefix and number for proper sorting
+                  const extractKeyParts = (key: string) => {
+                    const match = key.match(/^([A-Za-z][A-Za-z0-9_-]*)-(\d+)$/);
+                    if (match) {
+                      return { prefix: match[1], number: parseInt(match[2], 10) };
+                    }
+                    return { prefix: key, number: 0 };
+                  };
+                  
+                  const partsA = extractKeyParts(a.key);
+                  const partsB = extractKeyParts(b.key);
+                  
+                  // First sort by prefix, then by number
+                  if (partsA.prefix !== partsB.prefix) {
+                    return partsA.prefix.localeCompare(partsB.prefix);
+                  }
+                  return partsA.number - partsB.number;
+                })
+                .map((item, index) => {
                 const trackerUrl = generateTrackerUrl(item.key, item.mapping);
                 return (
                   <div key={`${item.key}-${index}`} className="flex items-center justify-between p-2 rounded border">
