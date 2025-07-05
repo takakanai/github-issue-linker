@@ -181,13 +181,15 @@ export function Popup() {
                 const backlogUrl = generateBacklogUrl(item.key, item.mapping);
                 return (
                   <div key={`${item.key}-${index}`} className="flex items-center justify-between p-2 rounded border">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => window.open(backlogUrl, '_blank')}
+                        title={`Open ${item.key} in Backlog`}
+                      >
                         {item.key}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {item.mapping.keyPrefix}
-                      </span>
                     </div>
                     <Button
                       variant="ghost"

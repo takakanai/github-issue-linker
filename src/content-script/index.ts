@@ -82,8 +82,17 @@ class ContentScript {
       // Initialize link processor with mappings
       this.linkProcessor.setMappings(mappings);
 
-      // Process initial content
+      // Process initial content with multiple timing attempts
       await this.processInitialContent();
+      
+      // Also process after DOM is fully ready
+      if (document.readyState !== 'complete') {
+        window.addEventListener('load', () => this.processInitialContent());
+      }
+      
+      // Additional delayed processing to catch dynamic content
+      setTimeout(() => this.processInitialContent(), 500);
+      setTimeout(() => this.processInitialContent(), 1500);
 
       // Set up mutation observer for dynamic content
       this.setupMutationObserver();
@@ -117,6 +126,20 @@ class ContentScript {
       
       // Update extension badge with detected keys count
       await this.updateBadge(detectedKeys.length);
+      
+      // Notify background script about detected keys
+      if (detectedKeys.length > 0) {
+        chrome.runtime.sendMessage({
+          type: 'KEYS_DETECTED',
+          data: {
+            repository: this.currentRepository,
+            keys: detectedKeys,
+            count: detectedKeys.length
+          }
+        }).catch(() => {
+          // Ignore errors (background script might not be ready)
+        });
+      }
       
       // Record performance metrics
       await storage.addPerformanceMetric({
@@ -244,7 +267,10 @@ class ContentScript {
       
       // Always reprocess content on any navigation (including same-repo navigation)
       if (this.currentRepository) {
+        // Process immediately and also with delay to catch dynamically loaded content
+        this.processInitialContent();
         setTimeout(() => this.processInitialContent(), 500);
+        setTimeout(() => this.processInitialContent(), 1000);
       }
     } catch (error) {
       await this.logError('Failed to handle navigation', error);
