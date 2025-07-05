@@ -87,7 +87,7 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
     if (!keyPrefix.trim()) {
       newErrors.keyPrefix = 'Key prefix is required';
     } else if (!isValidKeyPrefix(keyPrefix.trim())) {
-      newErrors.keyPrefix = 'Key prefix must start with a letter and contain only uppercase letters, numbers, underscores, and hyphens';
+      newErrors.keyPrefix = 'Key prefix must start with a letter and contain only letters, numbers, underscores, and hyphens';
     }
 
     setErrors(newErrors);
@@ -209,7 +209,7 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               placeholder="WMS"
               value={keyPrefix}
               onChange={(e) => {
-                setKeyPrefix(e.target.value.toUpperCase());
+                setKeyPrefix(e.target.value);
                 // Clear error when user starts typing
                 if (errors.keyPrefix) {
                   setErrors(prev => ({ ...prev, keyPrefix: '' }));
@@ -221,7 +221,7 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               <p className="text-sm text-destructive">{errors.keyPrefix}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Issue key prefix (e.g., WMS for WMS-123)
+              Issue key prefix (e.g., WMS for WMS-123, or api for api-456)
             </p>
           </div>
         </div>

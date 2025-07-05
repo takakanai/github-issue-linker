@@ -68,8 +68,8 @@ export function isValidRepositoryName(repository: string): boolean {
 }
 
 export function isValidKeyPrefix(prefix: string): boolean {
-  // Allow alphanumeric characters and hyphens
-  const regex = /^[A-Z][A-Z0-9_-]*$/;
+  // Allow alphanumeric characters, underscores, and hyphens (case-insensitive)
+  const regex = /^[A-Za-z][A-Za-z0-9_-]*$/;
   return regex.test(prefix);
 }
 
