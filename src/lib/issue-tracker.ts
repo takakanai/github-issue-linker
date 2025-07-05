@@ -16,7 +16,7 @@ export class BacklogTracker implements IssueTracker {
   
   generateUrl(key: string, baseUrl: string): string {
     const sanitized = sanitizeUrl(baseUrl);
-    return `${sanitized}/view/${encodeURIComponent(key)}`;
+    return `${sanitized}/${encodeURIComponent(key)}`;
   }
   
   validateUrl(url: string): boolean {

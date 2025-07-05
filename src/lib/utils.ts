@@ -76,7 +76,7 @@ export function isValidKeyPrefix(prefix: string): boolean {
 export function createSecureLink(issueKey: string, backlogUrl: string): HTMLAnchorElement {
   const link = document.createElement('a');
   link.textContent = issueKey;
-  link.href = `${sanitizeUrl(backlogUrl)}/view/${encodeURIComponent(issueKey)}`;
+  link.href = `${sanitizeUrl(backlogUrl)}/${encodeURIComponent(issueKey)}`;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.className = 'backlog-issue-link';

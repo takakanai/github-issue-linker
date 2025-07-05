@@ -93,7 +93,7 @@ export function Popup() {
   );
 
   const generateBacklogUrl = (key: string, mapping: RepositoryMapping): string => {
-    return `${sanitizeUrl(mapping.backlogUrl)}/view/${encodeURIComponent(key)}`;
+    return `${sanitizeUrl(mapping.backlogUrl)}/${encodeURIComponent(key)}`;
   };
 
   if (loading) {
