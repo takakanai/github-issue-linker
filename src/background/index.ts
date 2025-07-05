@@ -72,78 +72,84 @@ class BackgroundService {
     }
   }
 
-  private async handleMessage(
+  private handleMessage(
     message: any,
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void
-  ): Promise<void> {
-    try {
-      switch (message.type) {
-        case 'GET_REPOSITORY_MAPPINGS':
-          const mappings = await storage.getRepositoryMappings();
-          sendResponse({ success: true, data: mappings });
-          break;
-          
-        case 'ADD_REPOSITORY_MAPPING':
-          await storage.addRepositoryMapping(message.data);
-          sendResponse({ success: true });
-          break;
-          
-        case 'REMOVE_REPOSITORY_MAPPING':
-          await storage.removeRepositoryMapping(message.data.id);
-          sendResponse({ success: true });
-          break;
-          
-        case 'GET_USER_PREFERENCES':
-          const preferences = await storage.getUserPreferences();
-          sendResponse({ success: true, data: preferences });
-          break;
-          
-        case 'SET_USER_PREFERENCES':
-          await storage.setUserPreferences(message.data);
-          sendResponse({ success: true });
-          break;
-          
-        case 'EXPORT_SETTINGS':
-          const exportData = await storage.exportSettings();
-          sendResponse({ success: true, data: exportData });
-          break;
-          
-        case 'IMPORT_SETTINGS':
-          await storage.importSettings(message.data);
-          sendResponse({ success: true });
-          break;
-          
-        case 'GET_PERFORMANCE_METRICS':
-          const metrics = await storage.getPerformanceMetrics();
-          sendResponse({ success: true, data: metrics });
-          break;
-          
-        case 'GET_ERROR_LOGS':
-          const logs = await storage.getErrorLogs();
-          sendResponse({ success: true, data: logs });
-          break;
-          
-        case 'CLEAR_ERROR_LOGS':
-          await storage.clearErrorLogs();
-          sendResponse({ success: true });
-          break;
-          
-        case 'SHOW_NOTIFICATION':
-          await this.showNotification(message.data.title, message.data.message);
-          sendResponse({ success: true });
-          break;
-          
-        default:
-          sendResponse({ success: false, error: 'Unknown message type' });
+  ): boolean {
+    // Handle async operations
+    (async () => {
+      try {
+        switch (message.type) {
+          case 'GET_REPOSITORY_MAPPINGS':
+            const mappings = await storage.getRepositoryMappings();
+            sendResponse({ success: true, data: mappings });
+            break;
+            
+          case 'ADD_REPOSITORY_MAPPING':
+            await storage.addRepositoryMapping(message.data);
+            sendResponse({ success: true });
+            break;
+            
+          case 'REMOVE_REPOSITORY_MAPPING':
+            await storage.removeRepositoryMapping(message.data.id);
+            sendResponse({ success: true });
+            break;
+            
+          case 'GET_USER_PREFERENCES':
+            const preferences = await storage.getUserPreferences();
+            sendResponse({ success: true, data: preferences });
+            break;
+            
+          case 'SET_USER_PREFERENCES':
+            await storage.setUserPreferences(message.data);
+            sendResponse({ success: true });
+            break;
+            
+          case 'EXPORT_SETTINGS':
+            const exportData = await storage.exportSettings();
+            sendResponse({ success: true, data: exportData });
+            break;
+            
+          case 'IMPORT_SETTINGS':
+            await storage.importSettings(message.data);
+            sendResponse({ success: true });
+            break;
+            
+          case 'GET_PERFORMANCE_METRICS':
+            const metrics = await storage.getPerformanceMetrics();
+            sendResponse({ success: true, data: metrics });
+            break;
+            
+          case 'GET_ERROR_LOGS':
+            const logs = await storage.getErrorLogs();
+            sendResponse({ success: true, data: logs });
+            break;
+            
+          case 'CLEAR_ERROR_LOGS':
+            await storage.clearErrorLogs();
+            sendResponse({ success: true });
+            break;
+            
+          case 'SHOW_NOTIFICATION':
+            await this.showNotification(message.data.title, message.data.message);
+            sendResponse({ success: true });
+            break;
+            
+          default:
+            sendResponse({ success: false, error: 'Unknown message type' });
+        }
+      } catch (error) {
+        console.error('Error handling message:', error);
+        sendResponse({ 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
-    } catch (error) {
-      console.error('Error handling message:', error);
-      sendResponse({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      });
-    }
+    })();
+    
+    // Return true to indicate we will send a response asynchronously
+    return true;
   }
 
   private async handleStorageChanged(

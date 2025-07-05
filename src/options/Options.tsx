@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { MappingDialog } from '@/components/MappingDialog';
+import { Edit, Trash2, ExternalLink } from 'lucide-react';
 import type { RepositoryMapping } from '@/types';
 
 export function Options() {
   const [mappings, setMappings] = useState<RepositoryMapping[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingMapping, setEditingMapping] = useState<RepositoryMapping | null>(null);
 
   useEffect(() => {
     loadMappings();
@@ -24,6 +30,94 @@ export function Options() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveMapping = async (mapping: RepositoryMapping) => {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'ADD_REPOSITORY_MAPPING',
+        data: mapping,
+      });
+      await loadMappings();
+    } catch (error) {
+      console.error('Error saving mapping:', error);
+    }
+  };
+
+  const handleDeleteMapping = async (id: string) => {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'REMOVE_REPOSITORY_MAPPING',
+        data: { id },
+      });
+      await loadMappings();
+    } catch (error) {
+      console.error('Error deleting mapping:', error);
+    }
+  };
+
+  const handleToggleMapping = async (mapping: RepositoryMapping) => {
+    try {
+      const updatedMapping = { ...mapping, enabled: !mapping.enabled };
+      await chrome.runtime.sendMessage({
+        type: 'ADD_REPOSITORY_MAPPING',
+        data: updatedMapping,
+      });
+      await loadMappings();
+    } catch (error) {
+      console.error('Error toggling mapping:', error);
+    }
+  };
+
+  const handleEditMapping = (mapping: RepositoryMapping) => {
+    setEditingMapping(mapping);
+    setDialogOpen(true);
+  };
+
+  const handleAddMapping = () => {
+    setEditingMapping(null);
+    setDialogOpen(true);
+  };
+
+  const handleExportSettings = async () => {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'EXPORT_SETTINGS',
+      });
+      if (response.success) {
+        const blob = new Blob([response.data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'github-issue-linker-settings.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error exporting settings:', error);
+    }
+  };
+
+  const handleImportSettings = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          const text = await file.text();
+          await chrome.runtime.sendMessage({
+            type: 'IMPORT_SETTINGS',
+            data: text,
+          });
+          await loadMappings();
+        } catch (error) {
+          console.error('Error importing settings:', error);
+        }
+      }
+    };
+    input.click();
   };
 
   if (loading) {
@@ -57,23 +151,52 @@ export function Options() {
               <div className="space-y-4">
                 {mappings.map(mapping => (
                   <div key={mapping.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{mapping.repository}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {mapping.backlogUrl} - {mapping.keyPrefix}
-                        </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-medium">{mapping.repository}</h3>
+                          <Badge variant={mapping.enabled ? 'default' : 'secondary'}>
+                            {mapping.keyPrefix}
+                          </Badge>
+                          <Switch
+                            checked={mapping.enabled}
+                            onCheckedChange={() => handleToggleMapping(mapping)}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{mapping.backlogUrl}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(mapping.backlogUrl, '_blank')}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditMapping(mapping)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteMapping(mapping.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
             <div className="mt-4">
-              <Button>Add New Mapping</Button>
+              <Button onClick={handleAddMapping}>Add New Mapping</Button>
             </div>
           </CardContent>
         </Card>
@@ -84,12 +207,23 @@ export function Options() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
-              <Button variant="outline">Import Settings</Button>
-              <Button variant="outline">Export Settings</Button>
+              <Button variant="outline" onClick={handleImportSettings}>
+                Import Settings
+              </Button>
+              <Button variant="outline" onClick={handleExportSettings}>
+                Export Settings
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <MappingDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveMapping}
+        mapping={editingMapping}
+      />
     </div>
   );
 }
