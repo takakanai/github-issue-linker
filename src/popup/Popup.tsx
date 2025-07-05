@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, ExternalLink, Activity, Link2 } from 'lucide-react';
+import { Settings, ExternalLink, Activity, Link2, RefreshCw } from 'lucide-react';
 import type { UserPreferences, RepositoryMapping } from '@/types';
 import { sanitizeUrl } from '@/lib/utils';
 
@@ -84,6 +84,10 @@ export function Popup() {
     chrome.runtime.openOptionsPage();
   };
 
+  const reloadPage = () => {
+    chrome.tabs.reload();
+  };
+
   const currentMappings = mappings.filter(m => 
     currentRepository && m.repository === currentRepository && m.enabled
   );
@@ -94,27 +98,32 @@ export function Popup() {
 
   if (loading) {
     return (
-      <div className="w-80 p-4">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="w-80 p-2">
+        <div className="flex items-center justify-center h-16">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-80 p-4 space-y-4">
+    <div className="w-80 p-2 space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">GitHub Issue Linker</h1>
-        <Button variant="ghost" size="sm" onClick={openSettings}>
-          <Settings className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={reloadPage} title="Reload Page">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={openSettings} title="Settings">
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Main Toggle */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="py-3 px-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Extension Enabled</p>
@@ -133,19 +142,19 @@ export function Popup() {
       {/* Current Repository */}
       {currentRepository ? (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1 px-4 pt-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Activity className="h-4 w-4" />
               Current Repository
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0 px-4 pb-3">
             <p className="font-mono text-sm">{currentRepository}</p>
             {currentMappings.length > 0 && (
-              <div className="mt-3 space-y-2">
+              <div className="mt-2 space-y-1">
                 <p className="text-xs text-muted-foreground">Active Mappings:</p>
                 {currentMappings.map(mapping => (
-                  <div key={mapping.id} className="flex items-center justify-between">
+                  <div key={mapping.id} className="flex items-center justify-between py-1">
                     <Badge variant="secondary" className="text-xs">
                       {mapping.keyPrefix}
                     </Badge>
@@ -161,7 +170,7 @@ export function Popup() {
               </div>
             )}
             {currentMappings.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-1">
                 No active mappings for this repository.
               </p>
             )}
@@ -169,7 +178,7 @@ export function Popup() {
         </Card>
       ) : (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="py-3 px-4">
             <p className="text-sm text-muted-foreground text-center">
               Not viewing a GitHub repository
             </p>
@@ -180,14 +189,14 @@ export function Popup() {
       {/* Detected Issue Keys */}
       {detectedKeys.length > 0 && (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-1 px-4 pt-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Link2 className="h-4 w-4" />
               Detected Issue Keys
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+          <CardContent className="pt-0 px-4 pb-3">
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {detectedKeys.map((item, index) => {
                 const backlogUrl = generateBacklogUrl(item.key, item.mapping);
                 return (
@@ -218,11 +227,11 @@ export function Popup() {
 
       {/* Statistics */}
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-1 px-4 pt-3">
           <CardTitle className="text-sm">Statistics</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
+        <CardContent className="pt-0 px-4 pb-3">
+          <div className="space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total Mappings:</span>
               <span className="font-medium">{mappings.length}</span>
@@ -238,20 +247,6 @@ export function Popup() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1" onClick={openSettings}>
-          Settings
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => chrome.tabs.reload()}
-        >
-          Reload Page
-        </Button>
-      </div>
     </div>
   );
 }
