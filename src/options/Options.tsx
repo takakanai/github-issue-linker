@@ -135,7 +135,7 @@ export function Options() {
         <div>
           <h1 className="text-3xl font-bold">GitHub Issue Linker Settings</h1>
           <p className="text-muted-foreground mt-2">
-            Configure your Backlog issue linking preferences.
+            Configure your issue linking preferences.
           </p>
         </div>
 
@@ -165,11 +165,11 @@ export function Options() {
                           />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>{mapping.backlogUrl}</span>
+                          <span>{mapping.trackerUrl}</span>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(mapping.backlogUrl, '_blank')}
+                            onClick={() => window.open(mapping.trackerUrl, '_blank')}
                           >
                             <ExternalLink className="h-3 w-3" />
                           </Button>

@@ -32,7 +32,7 @@ class BackgroundService {
         console.log('GitHub Issue Linker: Extension installed');
         
         // Show welcome notification
-        await this.showNotification('Welcome to GitHub Issue Linker!', 'Configure your Backlog settings to get started.');
+        await this.showNotification('Welcome to GitHub Issue Linker!', 'Configure your issue tracker settings to get started.');
       } else if (details.reason === 'update') {
         // Handle extension updates
         await this.handleUpdate(details.previousVersion);

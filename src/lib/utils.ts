@@ -73,13 +73,13 @@ export function isValidKeyPrefix(prefix: string): boolean {
   return regex.test(prefix);
 }
 
-export function createSecureLink(issueKey: string, backlogUrl: string): HTMLAnchorElement {
+export function createSecureLink(issueKey: string, trackerUrl: string): HTMLAnchorElement {
   const link = document.createElement('a');
   link.textContent = issueKey;
-  link.href = `${sanitizeUrl(backlogUrl)}/${encodeURIComponent(issueKey)}`;
+  link.href = `${sanitizeUrl(trackerUrl)}/${encodeURIComponent(issueKey)}`;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  link.className = 'backlog-issue-link';
+  link.className = 'issue-link';
   link.style.cssText = `
     color: #0969da;
     text-decoration: underline;

@@ -59,13 +59,13 @@
 }
 
 /* Custom styles for the extension */
-.backlog-issue-link {
+.issue-link {
   color: #0969da !important;
   text-decoration: underline !important;
   text-decoration-color: transparent !important;
   transition: text-decoration-color 0.2s ease !important;
 }
 
-.backlog-issue-link:hover {
+.issue-link:hover {
   text-decoration-color: #0969da !important;
 }

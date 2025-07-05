@@ -1,10 +1,10 @@
 import type { RepositoryMapping, LinkProcessingOptions } from '@/types';
 import { shouldExcludeElement, getTextNodes, requestIdleCallback } from '@/lib/utils';
-import { BacklogTracker } from '@/lib/issue-tracker';
+import { GenericTracker } from '@/lib/issue-tracker';
 
 export class LinkProcessor {
   private mappings: RepositoryMapping[] = [];
-  private tracker = new BacklogTracker();
+  private tracker = new GenericTracker();
   private processedCount = 0;
   private detectedKeys: Array<{ key: string; mapping: RepositoryMapping }> = [];
   private options: LinkProcessingOptions = {

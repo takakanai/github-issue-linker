@@ -92,8 +92,17 @@ export function Popup() {
     currentRepository && m.repository === currentRepository && m.enabled
   );
 
-  const generateBacklogUrl = (key: string, mapping: RepositoryMapping): string => {
-    return `${sanitizeUrl(mapping.backlogUrl)}/${encodeURIComponent(key)}`;
+  const generateTrackerUrl = (key: string, mapping: RepositoryMapping): string => {
+    try {
+      if (!mapping.trackerUrl) {
+        console.error('Tracker URL is missing for mapping:', mapping);
+        return '#';
+      }
+      return `${sanitizeUrl(mapping.trackerUrl)}/${encodeURIComponent(key)}`;
+    } catch (error) {
+      console.error('Error generating tracker URL:', error, mapping);
+      return '#';
+    }
   };
 
   if (loading) {
@@ -178,15 +187,15 @@ export function Popup() {
           <CardContent className="pt-0 px-4 pb-3">
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {detectedKeys.map((item, index) => {
-                const backlogUrl = generateBacklogUrl(item.key, item.mapping);
+                const trackerUrl = generateTrackerUrl(item.key, item.mapping);
                 return (
                   <div key={`${item.key}-${index}`} className="flex items-center justify-between p-2 rounded border">
                     <div className="flex items-center gap-2 flex-1">
                       <Badge 
                         variant="outline" 
                         className="text-xs cursor-pointer hover:bg-accent transition-colors"
-                        onClick={() => window.open(backlogUrl, '_blank')}
-                        title={`Open ${item.key} in Backlog`}
+                        onClick={() => window.open(trackerUrl, '_blank')}
+                        title={`Open ${item.key} in issue tracker`}
                       >
                         {item.key}
                       </Badge>
@@ -194,8 +203,8 @@ export function Popup() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => window.open(backlogUrl, '_blank')}
-                      title={`Open ${item.key} in Backlog`}
+                      onClick={() => window.open(trackerUrl, '_blank')}
+                      title={`Open ${item.key} in issue tracker`}
                     >
                       <ExternalLink className="h-3 w-3" />
                     </Button>

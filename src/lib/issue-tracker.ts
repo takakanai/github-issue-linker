@@ -1,8 +1,8 @@
 import type { IssueTracker } from '@/types';
 import { sanitizeUrl } from '@/lib/utils';
 
-export class BacklogTracker implements IssueTracker {
-  name = 'Backlog';
+export class GenericTracker implements IssueTracker {
+  name = 'Generic';
   
   generatePattern(keyPrefix: string): RegExp {
     // Create pattern for specific key prefix (e.g., WMS-123)
@@ -10,7 +10,7 @@ export class BacklogTracker implements IssueTracker {
   }
   
   get detectPattern(): RegExp {
-    // Generic pattern for any Backlog issue key
+    // Generic pattern for any issue key
     return /\b[A-Z][A-Z0-9_-]*-\d+\b/g;
   }
   
@@ -83,7 +83,7 @@ export class LinearTracker implements IssueTracker {
 }
 
 export const issueTrackers = {
-  backlog: new BacklogTracker(),
+  generic: new GenericTracker(),
   jira: new JiraTracker(),
   linear: new LinearTracker(),
 };

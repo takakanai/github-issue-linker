@@ -22,7 +22,7 @@ interface MappingDialogProps {
 
 export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDialogProps) {
   const [repository, setRepository] = useState('');
-  const [backlogUrl, setBacklogUrl] = useState('');
+  const [trackerUrl, setTrackerUrl] = useState('');
   const [keyPrefix, setKeyPrefix] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -31,11 +31,11 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
   useEffect(() => {
     if (mapping) {
       setRepository(mapping.repository);
-      setBacklogUrl(mapping.backlogUrl);
+      setTrackerUrl(mapping.trackerUrl);
       setKeyPrefix(mapping.keyPrefix);
     } else {
       setRepository('');
-      setBacklogUrl('');
+      setTrackerUrl('');
       setKeyPrefix('');
     }
     setErrors({});
@@ -47,13 +47,13 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
   const isFormValid = () => {
     return (
       repository.trim() !== '' &&
-      backlogUrl.trim() !== '' &&
+      trackerUrl.trim() !== '' &&
       keyPrefix.trim() !== '' &&
       isValidRepositoryName(repository.trim()) &&
       isValidKeyPrefix(keyPrefix.trim()) &&
       (() => {
         try {
-          const url = new URL(backlogUrl.trim());
+          const url = new URL(trackerUrl.trim());
           return url.protocol === 'https:';
         } catch {
           return false;
@@ -71,16 +71,16 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
       newErrors.repository = 'Repository name must be in format "owner/repo"';
     }
 
-    if (!backlogUrl.trim()) {
-      newErrors.backlogUrl = 'Backlog URL is required';
+    if (!trackerUrl.trim()) {
+      newErrors.trackerUrl = 'Issue Tracker URL is required';
     } else {
       try {
-        const url = new URL(backlogUrl.trim());
+        const url = new URL(trackerUrl.trim());
         if (url.protocol !== 'https:') {
-          newErrors.backlogUrl = 'URL must use HTTPS';
+          newErrors.trackerUrl = 'URL must use HTTPS';
         }
       } catch {
-        newErrors.backlogUrl = 'Invalid URL format';
+        newErrors.trackerUrl = 'Invalid URL format';
       }
     }
 
@@ -104,7 +104,7 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
       const newMapping: RepositoryMapping = {
         id: mapping?.id || generateId(),
         repository: repository.trim(),
-        backlogUrl: backlogUrl.trim(),
+        trackerUrl: trackerUrl.trim(),
         keyPrefix: keyPrefix.trim(),
         enabled: mapping?.enabled ?? true,
         createdAt: mapping?.createdAt || new Date().toISOString(),
@@ -117,7 +117,7 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
       // Reset form
       if (!isEditing) {
         setRepository('');
-        setBacklogUrl('');
+        setTrackerUrl('');
         setKeyPrefix('');
       }
       setErrors({});
@@ -133,11 +133,11 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
     // Reset form if not editing, or revert to original values if editing
     if (isEditing && mapping) {
       setRepository(mapping.repository);
-      setBacklogUrl(mapping.backlogUrl);
+      setTrackerUrl(mapping.trackerUrl);
       setKeyPrefix(mapping.keyPrefix);
     } else {
       setRepository('');
-      setBacklogUrl('');
+      setTrackerUrl('');
       setKeyPrefix('');
     }
     onOpenChange(false);
@@ -180,25 +180,25 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="backlogUrl">Backlog URL</Label>
+            <Label htmlFor="trackerUrl">Issue Tracker URL</Label>
             <Input
-              id="backlogUrl"
-              placeholder="https://your-project.backlog.com"
-              value={backlogUrl}
+              id="trackerUrl"
+              placeholder="https://your-project.example.com"
+              value={trackerUrl}
               onChange={(e) => {
-                setBacklogUrl(e.target.value);
+                setTrackerUrl(e.target.value);
                 // Clear error when user starts typing
-                if (errors.backlogUrl) {
-                  setErrors(prev => ({ ...prev, backlogUrl: '' }));
+                if (errors.trackerUrl) {
+                  setErrors(prev => ({ ...prev, trackerUrl: '' }));
                 }
               }}
-              className={errors.backlogUrl ? 'border-destructive' : ''}
+              className={errors.trackerUrl ? 'border-destructive' : ''}
             />
-            {errors.backlogUrl && (
-              <p className="text-sm text-destructive">{errors.backlogUrl}</p>
+            {errors.trackerUrl && (
+              <p className="text-sm text-destructive">{errors.trackerUrl}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Your Backlog project URL (must use HTTPS)
+              Your issue tracker URL (must use HTTPS)
             </p>
           </div>
 

@@ -1,7 +1,7 @@
 export interface RepositoryMapping {
   id: string;
   repository: string; // org/repo format
-  backlogUrl: string;
+  trackerUrl: string;
   keyPrefix: string;
   enabled: boolean;
   createdAt: string;

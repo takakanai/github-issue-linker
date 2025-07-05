@@ -1,7 +1,7 @@
 {
   "name": "github-issue-linker",
   "version": "1.0.0",
-  "description": "Chrome extension for automatically linking Backlog issue keys on GitHub pages",
+  "description": "Chrome extension for automatically linking issue keys on GitHub pages",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -51,7 +51,7 @@
     "manifest_version": 3,
     "name": "GitHub Issue Linker",
     "version": "1.0.0",
-    "description": "Automatically link Backlog issue keys on GitHub pages",
+    "description": "Automatically link issue keys on GitHub pages",
     "permissions": [
       "activeTab",
       "storage"
