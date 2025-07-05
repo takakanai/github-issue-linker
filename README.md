@@ -141,10 +141,6 @@ src/
 4. Add tests if applicable
 5. Submit a pull request
 
-## License
-
-[MIT License](LICENSE)
-
 ## Support
 
 For issues, feature requests, or questions:
