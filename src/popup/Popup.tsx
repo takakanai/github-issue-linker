@@ -67,16 +67,55 @@ export function Popup() {
   const toggleEnabled = async (enabled: boolean) => {
     if (!preferences) return;
 
-    const newPreferences = { ...preferences, enabled };
-    
-    try {
-      await chrome.runtime.sendMessage({
-        type: 'SET_USER_PREFERENCES',
-        data: newPreferences,
-      });
-      setPreferences(newPreferences);
-    } catch (error) {
-      console.error('Error updating preferences:', error);
+    if (enabled) {
+      // Show confirmation dialog only for activation
+      const message = 'Activating the extension requires reloading the page to detect issue keys. Do you want to continue?';
+      
+      const confirmed = window.confirm(message);
+      if (!confirmed) {
+        return; // User cancelled, don't change the toggle
+      }
+
+      const newPreferences = { ...preferences, enabled };
+      
+      try {
+        // Update preferences first
+        await chrome.runtime.sendMessage({
+          type: 'SET_USER_PREFERENCES',
+          data: newPreferences,
+        });
+        setPreferences(newPreferences);
+        
+        // Reload the page after updating preferences
+        chrome.tabs.reload();
+        
+        // Close the popup after reload
+        window.close();
+      } catch (error) {
+        console.error('Error updating preferences:', error);
+      }
+    } else {
+      // For disabling, just update preferences without page reload
+      const newPreferences = { ...preferences, enabled };
+      
+      try {
+        await chrome.runtime.sendMessage({
+          type: 'SET_USER_PREFERENCES',
+          data: newPreferences,
+        });
+        setPreferences(newPreferences);
+        
+        // Clear badge when disabled
+        await chrome.runtime.sendMessage({
+          type: 'UPDATE_BADGE',
+          data: { count: 0 }
+        });
+        
+        // Update detected keys display
+        setDetectedKeys([]);
+      } catch (error) {
+        console.error('Error updating preferences:', error);
+      }
     }
   };
 
