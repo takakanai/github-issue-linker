@@ -34,6 +34,13 @@
       "title": "言語",
       "description": "拡張機能のインターフェースで使用する言語を選択してください。"
     },
+    "theme": {
+      "title": "テーマ",
+      "description": "拡張機能のインターフェースで使用するカラースキームを選択してください。",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
+    },
     "repositoryMappings": {
       "title": "リポジトリマッピング",
       "noMappings": "リポジトリマッピングが設定されていません。",

@@ -34,6 +34,13 @@
       "title": "Language",
       "description": "Choose your preferred language for the extension interface."
     },
+    "theme": {
+      "title": "Theme",
+      "description": "Choose your preferred color scheme for the extension interface.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "repositoryMappings": {
       "title": "Repository Mappings",
       "noMappings": "No repository mappings configured yet.",

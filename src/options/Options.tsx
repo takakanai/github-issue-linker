@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { MappingDialog } from '@/components/MappingDialog';
-import { Edit, Trash2, ExternalLink, Globe, GitBranch, Download, Upload } from 'lucide-react';
+import { Edit, Trash2, ExternalLink, Globe, GitBranch, Download, Upload, Palette } from 'lucide-react';
 import type { RepositoryMapping, UserPreferences } from '@/types';
 import { changeLanguage } from '@/lib/i18n';
 
@@ -154,6 +154,18 @@ export function Options() {
     }
   };
 
+  const handleThemeChange = async (theme: string) => {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_USER_PREFERENCES',
+        data: { ...preferences, theme },
+      });
+      setPreferences(prev => prev ? { ...prev, theme: theme as 'light' | 'dark' | 'system' } : null);
+    } catch (error) {
+      console.error('Error changing theme:', error);
+    }
+  };
+
   if (loading || !ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -265,6 +277,46 @@ export function Options() {
                   <RadioGroupItem value="ja" id="language-ja" />
                   <Label htmlFor="language-ja" className="cursor-pointer">
                     日本語
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              {t('options.theme.title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t('options.theme.description')}
+              </p>
+              <RadioGroup
+                value={preferences?.theme || 'system'}
+                onValueChange={handleThemeChange}
+                className="grid grid-cols-3 gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="light" id="theme-light" />
+                  <Label htmlFor="theme-light" className="cursor-pointer">
+                    {t('options.theme.light')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="dark" id="theme-dark" />
+                  <Label htmlFor="theme-dark" className="cursor-pointer">
+                    {t('options.theme.dark')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="system" id="theme-system" />
+                  <Label htmlFor="theme-system" className="cursor-pointer">
+                    {t('options.theme.system')}
                   </Label>
                 </div>
               </RadioGroup>
