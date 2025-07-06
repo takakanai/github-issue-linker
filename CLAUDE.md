@@ -11,15 +11,19 @@ This is a Chrome extension project that automatically detects and links issue ke
 - **Multi-Repository Support**: Different issue tracker configurations per GitHub repository
 - **Real-time Processing**: Uses MutationObserver for dynamic content detection
 - **Performance Optimization**: Adaptive strategies based on page complexity
+- **Internationalization (i18n)**: Full English and Japanese localization with auto-detection
+- **Theme Support**: Light, dark, and system theme modes with real-time switching
 - **Modern Chrome Extension**: Manifest V3 with service workers
 
 ### **Technical Stack**
 - **Chrome Extension Manifest V3**: Service worker architecture
 - **TypeScript**: Full type safety throughout
-- **React 18**: Modern component-based UI
+- **React 18**: Modern component-based UI with hooks and context
 - **Vite + @crxjs/vite-plugin**: Fast build system optimized for extensions
 - **shadcn/ui**: Accessible component library built on Radix UI
-- **Tailwind CSS**: Utility-first styling
+- **Tailwind CSS**: Utility-first styling with theme support
+- **react-i18next**: Internationalization framework for React
+- **Radix UI**: Headless UI primitives for accessibility
 
 ## File Structure
 
@@ -31,28 +35,39 @@ src/
 │   ├── index.ts              # Main content script initialization
 │   └── link-processor.ts     # Issue key detection and processing logic
 ├── popup/
+│   ├── index.tsx             # Popup entry point with ThemeProvider
 │   └── Popup.tsx             # Extension popup UI (shows detected keys)
 ├── options/
-│   └── Options.tsx           # Settings page for repository mappings
+│   ├── index.tsx             # Options entry point with ThemeProvider
+│   └── Options.tsx           # Settings page with repository mappings, theme, language
 ├── components/
-│   ├── ui/                   # shadcn/ui components (Button, Card, etc.)
+│   ├── ui/                   # shadcn/ui components (Button, Card, RadioGroup, etc.)
 │   └── MappingDialog.tsx     # Repository mapping configuration dialog
+├── contexts/
+│   └── ThemeContext.tsx      # React context for theme management
 ├── lib/
 │   ├── storage.ts            # Storage management (sync/local/session)
 │   ├── issue-tracker.ts      # Issue tracker patterns and URL generation
+│   ├── i18n.ts              # Internationalization setup and utilities
 │   └── utils.ts              # Utility functions
+├── locales/
+│   ├── en/
+│   │   └── common.json       # English translations
+│   └── ja/
+│       └── common.json       # Japanese translations
 ├── types/
 │   └── index.ts              # TypeScript type definitions
 └── styles/
-    └── globals.css           # Global styles and Tailwind imports
+    └── globals.css           # Global styles, Tailwind imports, theme variables
 ```
 
 ## Key Components
 
 ### **Storage Architecture**
-- **Sync Storage**: User preferences (enabled/disabled, theme, notifications)
+- **Sync Storage**: User preferences (enabled/disabled, theme, notifications, language)
 - **Local Storage**: Repository mappings, performance metrics, error logs
 - **Session Storage**: Processing cache for current session
+- **Real-time Sync**: chrome.storage.onChanged listeners for cross-component updates
 
 ### **Content Script Processing**
 1. **Initialization**: Checks repository, loads mappings, sets up observers
@@ -107,14 +122,33 @@ interface RepositoryMapping {
 ### **User Preferences**
 ```typescript
 interface UserPreferences {
-  enabled: boolean;          // Global enable/disable
-  theme: 'light' | 'dark' | 'system';
-  showNotifications: boolean;
-  performanceMode: 'auto' | 'fast' | 'thorough';
+  enabled: boolean;                        // Global enable/disable
+  theme: 'light' | 'dark' | 'system';    // Theme preference
+  showNotifications: boolean;              // Notification settings
+  performanceMode: 'auto' | 'fast' | 'comprehensive';
+  language: 'en' | 'ja';                  // Language preference
 }
 ```
 
 ## Key Implementation Details
+
+### **Internationalization (i18n) System**
+- **Framework**: react-i18next for React integration
+- **Language Detection**: Automatic browser language detection with manual override
+- **Supported Languages**: English (default) and Japanese with full translations
+- **Translation Structure**: Hierarchical JSON files with namespaces (common, popup, options, etc.)
+- **Real-time Switching**: Language changes apply immediately to all components
+- **Storage Integration**: Language preference saved to chrome.storage.sync
+- **Context-aware**: Proper pluralization and variable interpolation support
+
+### **Theme System**
+- **Theme Modes**: Light, dark, and system (follows OS preference)
+- **Implementation**: React Context with ThemeProvider wrapper
+- **CSS Variables**: Uses CSS custom properties for seamless theme switching
+- **System Detection**: Automatic detection of OS dark mode preference
+- **Real-time Updates**: Theme changes apply instantly across all extension windows
+- **Storage Persistence**: Theme preference synced across browser sessions
+- **Component Integration**: All shadcn/ui components automatically support themes
 
 ### **Issue Key Detection**
 - **Pattern**: `/\b[A-Za-z][A-Za-z0-9_-]*-\d+\b/g`
@@ -144,9 +178,12 @@ interface UserPreferences {
 - **Action Buttons**: Quick access to settings and page reload
 
 ### **Settings Page**
-- **Repository Mappings**: CRUD interface for repository configurations
-- **Import/Export**: Settings backup and restore
+- **Repository Mappings**: CRUD interface for repository configurations with GitBranch icon
+- **Language Selection**: Radio group for English/Japanese with Globe icon  
+- **Theme Selection**: Radio group for Light/Dark/System with Palette icon
+- **Import/Export**: Settings backup and restore with Download/Upload icons
 - **Validation**: Real-time form validation with error messages
+- **Card Layout**: Organized in logical sections with appropriate icons
 
 ## Extension Lifecycle
 
@@ -181,6 +218,9 @@ interface UserPreferences {
 - **Sorted Key Display**: Keys displayed in ascending order (prefix first, then number)
 - **Improved Toggle UX**: Smart reload behavior based on enable/disable action
 - **Better Error Handling**: Graceful degradation when tracker URLs are invalid
+- **Full Internationalization**: Complete English and Japanese localization with auto-detection
+- **Theme System**: Light, dark, and system theme modes with real-time switching
+- **Enhanced UI**: Modern card-based settings layout with contextual icons
 
 ## Debugging & Troubleshooting
 
@@ -239,5 +279,28 @@ interface UserPreferences {
 3. **Storage Migration**: Be careful when changing data structures - implement migration if needed
 4. **Performance**: Test on large GitHub pages (1000+ lines) to ensure good performance
 5. **Security**: Never use `innerHTML` or similar - always use safe DOM methods
+6. **i18n Development**: Use `t()` function for all user-facing strings, organize by namespace
+7. **Theme Development**: Use CSS variables and Tailwind classes, test in all theme modes
+8. **Context Dependencies**: Ensure ThemeProvider wraps all React components in entry points
+9. **Storage Sync**: Test theme and language changes sync correctly between popup and settings
+10. **Translation Keys**: Follow hierarchical structure (e.g., `options.theme.title`) for maintainability
 
-This extension is production-ready and provides a solid foundation for generic issue tracker integration with GitHub.
+## Build Commands & Extensions
+```bash
+# Install dependencies (includes new i18n packages)
+npm install
+
+# Development with hot reload (includes theme/i18n)
+npm run dev
+
+# Production build (generates localized and themed assets)
+npm run build
+
+# Type checking (includes new context types)
+npm run typecheck
+
+# Linting (covers new components and contexts)
+npm run lint
+```
+
+This extension is production-ready and provides a comprehensive, internationalized, and themeable foundation for generic issue tracker integration with GitHub.

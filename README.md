@@ -10,6 +10,8 @@ A Chrome extension that automatically detects and links issue keys (e.g., `WMS-1
 - **⚡ Real-time Processing**: Uses MutationObserver to detect keys in dynamically loaded content
 - **📊 Performance Optimized**: Adaptive processing strategies based on page complexity
 - **🎨 Modern UI**: Clean, accessible interface built with shadcn/ui components
+- **🌍 Multi-language Support**: Full internationalization with English and Japanese support
+- **🌓 Theme Support**: Light, dark, and system theme modes with real-time switching
 - **📱 Browser Integration**: Shows detected key count in extension badge
 - **⚙️ Flexible Configuration**: Import/export settings, enable/disable per preference
 - **🔒 Security First**: Minimal permissions, secure link generation, HTTPS enforcement
@@ -49,6 +51,21 @@ A Chrome extension that automatically detects and links issue keys (e.g., `WMS-1
 - **Key Prefix**: `WEB`
 
 This will detect keys like `WEB-123`, `WEB-456` on `github.com/myorg/frontend` pages and link them to `https://myorg.atlassian.net/WEB-123`.
+
+### Language and Theme Configuration
+The extension supports multiple languages and theme modes:
+
+#### Language Support
+- **English**: Default language
+- **Japanese**: Full localization with proper translations
+- **Auto-detection**: Uses browser language preference by default
+- **Manual Override**: Change language in Settings page
+
+#### Theme Modes
+- **Light**: Traditional light theme
+- **Dark**: Dark theme for reduced eye strain
+- **System**: Automatically follows your operating system's theme preference
+- **Real-time Sync**: Theme changes instantly apply to all extension windows
 
 ## Supported Issue Trackers
 
@@ -112,7 +129,12 @@ src/
 ├── popup/             # Extension popup UI
 ├── options/           # Settings/configuration page
 ├── components/        # Reusable UI components
+│   └── ui/           # shadcn/ui components
+├── contexts/          # React contexts (Theme, etc.)
 ├── lib/              # Utility libraries and business logic
+├── locales/          # Internationalization files
+│   ├── en/           # English translations
+│   └── ja/           # Japanese translations
 ├── types/            # TypeScript type definitions
 └── styles/           # Global styles
 ```
@@ -124,6 +146,8 @@ src/
 - **Vite**: Fast build system with `@crxjs/vite-plugin`
 - **shadcn/ui**: Modern, accessible component library
 - **Tailwind CSS**: Utility-first CSS framework
+- **react-i18next**: Internationalization framework for React
+- **Radix UI**: Headless UI primitives for accessibility
 
 ## Privacy & Security
 
