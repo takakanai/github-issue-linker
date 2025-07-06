@@ -13,6 +13,7 @@ export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
   showNotifications: boolean;
   performanceMode: 'auto' | 'fast' | 'comprehensive';
+  language: 'en' | 'ja';
 }
 
 export interface GlobalSettings {

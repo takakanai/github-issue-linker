@@ -1,0 +1,88 @@
+{
+  "common": {
+    "extension": "拡張機能",
+    "active": "有効",
+    "disabled": "無効",
+    "settings": "設定",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "loading": "読み込み中...",
+    "saving": "保存中...",
+    "add": "追加",
+    "edit": "編集",
+    "delete": "削除",
+    "close": "閉じる",
+    "ok": "OK",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "popup": {
+    "title": "GitHub Issue Linker",
+    "reloadPage": "ページを再読み込み",
+    "repository": "リポジトリ",
+    "notOnGitHub": "GitHubリポジトリを表示していません",
+    "detectedKeys": "検出された課題キー ({{count}})",
+    "noKeysDetected": "課題キーが検出されませんでした",
+    "helpText": "課題キーがあるページに移動すると、ここに表示されます",
+    "activateConfirm": "拡張機能を有効にするには、課題キーを検出するためにページを再読み込みする必要があります。続行しますか？",
+    "openInTracker": "{{key}}を課題管理システムで開く"
+  },
+  "options": {
+    "title": "GitHub Issue Linker 設定",
+    "description": "課題リンクの設定を行います。",
+    "language": {
+      "title": "言語",
+      "description": "拡張機能のインターフェースで使用する言語を選択してください。"
+    },
+    "repositoryMappings": {
+      "title": "リポジトリマッピング",
+      "noMappings": "リポジトリマッピングが設定されていません。",
+      "addNew": "新しいマッピングを追加"
+    },
+    "importExport": {
+      "title": "インポート/エクスポート",
+      "import": "設定をインポート",
+      "export": "設定をエクスポート"
+    }
+  },
+  "mappingDialog": {
+    "addTitle": "新しいリポジトリマッピングを追加",
+    "editTitle": "リポジトリマッピングを編集",
+    "description": "特定のリポジトリで課題キーをどのようにリンクするかを設定します。",
+    "repository": {
+      "label": "リポジトリ",
+      "placeholder": "owner/repo",
+      "help": "形式: owner/repository（例: microsoft/vscode）"
+    },
+    "trackerUrl": {
+      "label": "課題管理システムURL",
+      "placeholder": "https://your-project.example.com",
+      "help": "課題管理システムのURL（HTTPS必須）"
+    },
+    "keyPrefix": {
+      "label": "キープレフィックス",
+      "placeholder": "WMS",
+      "help": "課題キーの接頭辞（例: WMS-123のWMS、api-456のapi）"
+    },
+    "saveChanges": "変更を保存",
+    "addMapping": "マッピングを追加"
+  },
+  "validation": {
+    "repositoryRequired": "リポジトリ名は必須です",
+    "repositoryFormat": "リポジトリ名は \"owner/repo\" の形式で入力してください",
+    "trackerUrlRequired": "課題管理システムURLは必須です",
+    "httpsRequired": "URLはHTTPSを使用してください",
+    "invalidUrl": "URLの形式が正しくありません",
+    "keyPrefixRequired": "キープレフィックスは必須です",
+    "keyPrefixFormat": "キープレフィックスは文字で始まり、文字、数字、アンダースコア、ハイフンのみを含む必要があります"
+  },
+  "notifications": {
+    "welcome": "GitHub Issue Linkerへようこそ！",
+    "welcomeMessage": "課題管理システムの設定を行って開始してください。"
+  },
+  "errors": {
+    "invalidJson": "インポート用のJSONデータが無効です",
+    "httpsOnly": "HTTPSのURLのみ許可されています",
+    "invalidUrlFormat": "URLの形式が正しくありません"
+  }
+}

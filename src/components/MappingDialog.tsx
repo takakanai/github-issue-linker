@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,7 @@ interface MappingDialogProps {
 }
 
 export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDialogProps) {
+  const { t, ready } = useTranslation();
   const [repository, setRepository] = useState('');
   const [trackerUrl, setTrackerUrl] = useState('');
   const [keyPrefix, setKeyPrefix] = useState('');
@@ -66,28 +68,28 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
     const newErrors: Record<string, string> = {};
 
     if (!repository.trim()) {
-      newErrors.repository = 'Repository name is required';
+      newErrors.repository = t('validation.repositoryRequired');
     } else if (!isValidRepositoryName(repository.trim())) {
-      newErrors.repository = 'Repository name must be in format "owner/repo"';
+      newErrors.repository = t('validation.repositoryFormat');
     }
 
     if (!trackerUrl.trim()) {
-      newErrors.trackerUrl = 'Issue Tracker URL is required';
+      newErrors.trackerUrl = t('validation.trackerUrlRequired');
     } else {
       try {
         const url = new URL(trackerUrl.trim());
         if (url.protocol !== 'https:') {
-          newErrors.trackerUrl = 'URL must use HTTPS';
+          newErrors.trackerUrl = t('validation.httpsRequired');
         }
       } catch {
-        newErrors.trackerUrl = 'Invalid URL format';
+        newErrors.trackerUrl = t('validation.invalidUrl');
       }
     }
 
     if (!keyPrefix.trim()) {
-      newErrors.keyPrefix = 'Key prefix is required';
+      newErrors.keyPrefix = t('validation.keyPrefixRequired');
     } else if (!isValidKeyPrefix(keyPrefix.trim())) {
-      newErrors.keyPrefix = 'Key prefix must start with a letter and contain only letters, numbers, underscores, and hyphens';
+      newErrors.keyPrefix = t('validation.keyPrefixFormat');
     }
 
     setErrors(newErrors);
@@ -143,24 +145,28 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
     onOpenChange(false);
   };
 
+  if (!ready) {
+    return null;
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Edit Repository Mapping' : 'Add New Repository Mapping'}
+            {isEditing ? t('mappingDialog.editTitle') : t('mappingDialog.addTitle')}
           </DialogTitle>
           <DialogDescription>
-            Configure how issue keys should be linked for a specific repository.
+            {t('mappingDialog.description')}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="repository">Repository</Label>
+            <Label htmlFor="repository">{t('mappingDialog.repository.label')}</Label>
             <Input
               id="repository"
-              placeholder="owner/repo"
+              placeholder={t('mappingDialog.repository.placeholder')}
               value={repository}
               onChange={(e) => {
                 setRepository(e.target.value);
@@ -175,15 +181,15 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               <p className="text-sm text-destructive">{errors.repository}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Format: owner/repository (e.g., microsoft/vscode)
+              {t('mappingDialog.repository.help')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="trackerUrl">Issue Tracker URL</Label>
+            <Label htmlFor="trackerUrl">{t('mappingDialog.trackerUrl.label')}</Label>
             <Input
               id="trackerUrl"
-              placeholder="https://your-project.example.com"
+              placeholder={t('mappingDialog.trackerUrl.placeholder')}
               value={trackerUrl}
               onChange={(e) => {
                 setTrackerUrl(e.target.value);
@@ -198,15 +204,15 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               <p className="text-sm text-destructive">{errors.trackerUrl}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Your issue tracker URL (must use HTTPS)
+              {t('mappingDialog.trackerUrl.help')}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="keyPrefix">Key Prefix</Label>
+            <Label htmlFor="keyPrefix">{t('mappingDialog.keyPrefix.label')}</Label>
             <Input
               id="keyPrefix"
-              placeholder="WMS"
+              placeholder={t('mappingDialog.keyPrefix.placeholder')}
               value={keyPrefix}
               onChange={(e) => {
                 setKeyPrefix(e.target.value);
@@ -221,20 +227,20 @@ export function MappingDialog({ open, onOpenChange, onSave, mapping }: MappingDi
               <p className="text-sm text-destructive">{errors.keyPrefix}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Issue key prefix (e.g., WMS for WMS-123, or api for api-456)
+              {t('mappingDialog.keyPrefix.help')}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={loading}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button 
             onClick={handleSave} 
             disabled={loading || !isFormValid()}
           >
-            {loading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Mapping'}
+            {loading ? t('common.saving') : isEditing ? t('mappingDialog.saveChanges') : t('mappingDialog.addMapping')}
           </Button>
         </DialogFooter>
       </DialogContent>

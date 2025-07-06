@@ -45,11 +45,13 @@ class BackgroundService {
 
   private async setupDefaultSettings(): Promise<void> {
     // Set default user preferences
+    const browserLang = navigator.language.toLowerCase().startsWith('ja') ? 'ja' : 'en';
     const defaultPreferences = {
       enabled: true,
       theme: 'system' as const,
       showNotifications: true,
       performanceMode: 'auto' as const,
+      language: browserLang as 'en' | 'ja',
     };
     
     await storage.setUserPreferences(defaultPreferences);
@@ -108,6 +110,11 @@ class BackgroundService {
             break;
             
           case 'SET_USER_PREFERENCES':
+            await storage.setUserPreferences(message.data);
+            sendResponse({ success: true });
+            break;
+            
+          case 'UPDATE_USER_PREFERENCES':
             await storage.setUserPreferences(message.data);
             sendResponse({ success: true });
             break;

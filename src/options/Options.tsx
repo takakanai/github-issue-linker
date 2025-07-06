@@ -1,21 +1,41 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { MappingDialog } from '@/components/MappingDialog';
-import { Edit, Trash2, ExternalLink } from 'lucide-react';
-import type { RepositoryMapping } from '@/types';
+import { Edit, Trash2, ExternalLink, Globe, GitBranch, Download, Upload } from 'lucide-react';
+import type { RepositoryMapping, UserPreferences } from '@/types';
+import { changeLanguage } from '@/lib/i18n';
 
 export function Options() {
+  const { t, ready } = useTranslation();
   const [mappings, setMappings] = useState<RepositoryMapping[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMapping, setEditingMapping] = useState<RepositoryMapping | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
   useEffect(() => {
     loadMappings();
+    loadPreferences();
   }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'GET_USER_PREFERENCES',
+      });
+      if (response.success) {
+        setPreferences(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+    }
+  };
 
 
   const loadMappings = async () => {
@@ -121,7 +141,20 @@ export function Options() {
     input.click();
   };
 
-  if (loading) {
+  const handleLanguageChange = async (language: string) => {
+    try {
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_USER_PREFERENCES',
+        data: { ...preferences, language },
+      });
+      await changeLanguage(language);
+      setPreferences(prev => prev ? { ...prev, language: language as 'en' | 'ja' } : null);
+    } catch (error) {
+      console.error('Error changing language:', error);
+    }
+  };
+
+  if (loading || !ready) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -133,20 +166,23 @@ export function Options() {
     <div className="container mx-auto py-8 max-w-4xl">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">GitHub Issue Linker Settings</h1>
+          <h1 className="text-3xl font-bold">{t('options.title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Configure your issue linking preferences.
+            {t('options.description')}
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Repository Mappings</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <GitBranch className="h-5 w-5" />
+              {t('options.repositoryMappings.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {mappings.length === 0 ? (
               <p className="text-muted-foreground">
-                No repository mappings configured yet.
+                {t('options.repositoryMappings.noMappings')}
               </p>
             ) : (
               <div className="space-y-4">
@@ -197,23 +233,64 @@ export function Options() {
               </div>
             )}
             <div className="mt-4">
-              <Button onClick={handleAddMapping}>Add New Mapping</Button>
+              <Button onClick={handleAddMapping}>{t('options.repositoryMappings.addNew')}</Button>
             </div>
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              {t('options.language.title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t('options.language.description')}
+              </p>
+              <RadioGroup
+                value={preferences?.language || 'en'}
+                onValueChange={handleLanguageChange}
+                className="grid grid-cols-2 gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="en" id="language-en" />
+                  <Label htmlFor="language-en" className="cursor-pointer">
+                    English
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ja" id="language-ja" />
+                  <Label htmlFor="language-ja" className="cursor-pointer">
+                    日本語
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Import/Export</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Download className="h-4 w-4" />
+                <Upload className="h-4 w-4" />
+              </div>
+              {t('options.importExport.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleImportSettings}>
-                Import Settings
+              <Button variant="outline" onClick={handleImportSettings} className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                {t('options.importExport.import')}
               </Button>
-              <Button variant="outline" onClick={handleExportSettings}>
-                Export Settings
+              <Button variant="outline" onClick={handleExportSettings} className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                {t('options.importExport.export')}
               </Button>
             </div>
           </CardContent>

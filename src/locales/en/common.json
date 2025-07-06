@@ -1,0 +1,88 @@
+{
+  "common": {
+    "extension": "Extension",
+    "active": "Active",
+    "disabled": "Disabled",
+    "settings": "Settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "close": "Close",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "popup": {
+    "title": "GitHub Issue Linker",
+    "reloadPage": "Reload Page",
+    "repository": "Repository",
+    "notOnGitHub": "Not viewing a GitHub repository",
+    "detectedKeys": "Detected Issue Keys ({{count}})",
+    "noKeysDetected": "No issue keys detected",
+    "helpText": "Navigate to a page with issue keys to see them here",
+    "activateConfirm": "Activating the extension requires reloading the page to detect issue keys. Do you want to continue?",
+    "openInTracker": "Open {{key}} in issue tracker"
+  },
+  "options": {
+    "title": "GitHub Issue Linker Settings",
+    "description": "Configure your issue linking preferences.",
+    "language": {
+      "title": "Language",
+      "description": "Choose your preferred language for the extension interface."
+    },
+    "repositoryMappings": {
+      "title": "Repository Mappings",
+      "noMappings": "No repository mappings configured yet.",
+      "addNew": "Add New Mapping"
+    },
+    "importExport": {
+      "title": "Import/Export",
+      "import": "Import Settings",
+      "export": "Export Settings"
+    }
+  },
+  "mappingDialog": {
+    "addTitle": "Add New Repository Mapping",
+    "editTitle": "Edit Repository Mapping",
+    "description": "Configure how issue keys should be linked for a specific repository.",
+    "repository": {
+      "label": "Repository",
+      "placeholder": "owner/repo",
+      "help": "Format: owner/repository (e.g., microsoft/vscode)"
+    },
+    "trackerUrl": {
+      "label": "Issue Tracker URL",
+      "placeholder": "https://your-project.example.com",
+      "help": "Your issue tracker URL (must use HTTPS)"
+    },
+    "keyPrefix": {
+      "label": "Key Prefix",
+      "placeholder": "WMS",
+      "help": "Issue key prefix (e.g., WMS for WMS-123, or api for api-456)"
+    },
+    "saveChanges": "Save Changes",
+    "addMapping": "Add Mapping"
+  },
+  "validation": {
+    "repositoryRequired": "Repository name is required",
+    "repositoryFormat": "Repository name must be in format \"owner/repo\"",
+    "trackerUrlRequired": "Issue Tracker URL is required",
+    "httpsRequired": "URL must use HTTPS",
+    "invalidUrl": "Invalid URL format",
+    "keyPrefixRequired": "Key prefix is required",
+    "keyPrefixFormat": "Key prefix must start with a letter and contain only letters, numbers, underscores, and hyphens"
+  },
+  "notifications": {
+    "welcome": "Welcome to GitHub Issue Linker!",
+    "welcomeMessage": "Configure your issue tracker settings to get started."
+  },
+  "errors": {
+    "invalidJson": "Invalid JSON data for import",
+    "httpsOnly": "Only HTTPS URLs are allowed",
+    "invalidUrlFormat": "Invalid URL format"
+  }
+}

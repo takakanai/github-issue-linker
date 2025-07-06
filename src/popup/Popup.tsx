@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Settings, ExternalLink, Activity, Link2, RefreshCw } from 'lucide-react';
 import type { UserPreferences, RepositoryMapping } from '@/types';
 import { sanitizeUrl } from '@/lib/utils';
+import { changeLanguage } from '@/lib/i18n';
 
 export function Popup() {
+  const { t, ready } = useTranslation();
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [currentRepository, setCurrentRepository] = useState<string | null>(null);
   const [mappings, setMappings] = useState<RepositoryMapping[]>([]);
@@ -16,7 +19,31 @@ export function Popup() {
 
   useEffect(() => {
     loadData();
+    
+    // Listen for storage changes to update preferences in real-time
+    const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'sync' && changes.userPreferences) {
+        const newPreferences = changes.userPreferences.newValue;
+        if (newPreferences) {
+          setPreferences(newPreferences);
+        }
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
+
+  // Set language when preferences change
+  useEffect(() => {
+    if (preferences?.language) {
+      changeLanguage(preferences.language);
+    }
+  }, [preferences?.language]);
 
   const loadData = async () => {
     try {
@@ -69,7 +96,7 @@ export function Popup() {
 
     if (enabled) {
       // Show confirmation dialog only for activation
-      const message = 'Activating the extension requires reloading the page to detect issue keys. Do you want to continue?';
+      const message = t('popup.activateConfirm');
       
       const confirmed = window.confirm(message);
       if (!confirmed) {
@@ -144,7 +171,7 @@ export function Popup() {
     }
   };
 
-  if (loading) {
+  if (loading || !ready) {
     return (
       <div className="w-80 p-2">
         <div className="flex items-center justify-center h-16">
@@ -164,17 +191,17 @@ export function Popup() {
             onCheckedChange={toggleEnabled}
           />
           <div>
-            <p className="font-medium">Extension</p>
+            <p className="font-medium">{t('common.extension')}</p>
             <p className="text-xs text-muted-foreground">
-              {preferences?.enabled ? 'Active' : 'Disabled'}
+              {preferences?.enabled ? t('common.active') : t('common.disabled')}
             </p>
           </div>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={reloadPage} title="Reload Page">
+          <Button variant="ghost" size="sm" onClick={reloadPage} title={t('popup.reloadPage')}>
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={openSettings} title="Settings">
+          <Button variant="ghost" size="sm" onClick={openSettings} title={t('common.settings')}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -188,7 +215,7 @@ export function Popup() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Activity className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Repository</span>
+                  <span className="text-xs text-muted-foreground">{t('popup.repository')}</span>
                 </div>
                 <p className="font-mono text-sm truncate">{currentRepository}</p>
               </div>
@@ -208,7 +235,7 @@ export function Popup() {
         <Card>
           <CardContent className="py-3 px-4">
             <p className="text-sm text-muted-foreground text-center">
-              Not viewing a GitHub repository
+              {t('popup.notOnGitHub')}
             </p>
           </CardContent>
         </Card>
@@ -220,7 +247,7 @@ export function Popup() {
           <CardHeader className="pb-1 px-4 pt-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Link2 className="h-4 w-4" />
-              Detected Issue Keys ({detectedKeys.length})
+{t('popup.detectedKeys', { count: detectedKeys.length })}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0 px-4 pb-3">
@@ -254,7 +281,7 @@ export function Popup() {
                         variant="outline" 
                         className="text-xs cursor-pointer hover:bg-accent transition-colors"
                         onClick={() => window.open(trackerUrl, '_blank')}
-                        title={`Open ${item.key} in issue tracker`}
+                        title={t('popup.openInTracker', { key: item.key })}
                       >
                         {item.key}
                       </Badge>
@@ -263,7 +290,7 @@ export function Popup() {
                       variant="ghost"
                       size="sm"
                       onClick={() => window.open(trackerUrl, '_blank')}
-                      title={`Open ${item.key} in issue tracker`}
+                      title={t('popup.openInTracker', { key: item.key })}
                     >
                       <ExternalLink className="h-3 w-3" />
                     </Button>
@@ -278,8 +305,8 @@ export function Popup() {
           <CardContent className="py-8 px-4">
             <div className="text-center text-muted-foreground">
               <Link2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No issue keys detected</p>
-              <p className="text-xs mt-1">Navigate to a page with issue keys to see them here</p>
+              <p className="text-sm">{t('popup.noKeysDetected')}</p>
+              <p className="text-xs mt-1">{t('popup.helpText')}</p>
             </div>
           </CardContent>
         </Card>

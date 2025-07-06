@@ -15,11 +15,13 @@ class StorageManager {
   // User Preferences (sync storage)
   async getUserPreferences(): Promise<UserPreferences> {
     const result = await chrome.storage.sync.get('userPreferences');
+    const browserLang = navigator.language.toLowerCase().startsWith('ja') ? 'ja' : 'en';
     return result.userPreferences || {
       enabled: true,
       theme: 'system',
       showNotifications: true,
       performanceMode: 'auto',
+      language: browserLang,
     };
   }
 
