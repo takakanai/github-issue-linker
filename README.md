@@ -165,11 +165,27 @@ src/
 4. Add tests if applicable
 5. Submit a pull request
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-Party Licenses
+
+This project uses several open-source dependencies. See [ATTRIBUTION.md](ATTRIBUTION.md) for detailed license information and required attributions.
+
 ## Support
 
 For issues, feature requests, or questions:
 - Open an issue on GitHub
 - Check existing issues for similar problems
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ---
 

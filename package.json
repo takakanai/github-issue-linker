@@ -2,6 +2,7 @@
   "name": "github-issue-linker",
   "version": "1.0.0",
   "description": "Chrome extension for automatically linking issue keys on GitHub pages",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
